@@ -4,9 +4,14 @@
   "description": "API do EternoMemorial",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js"
+    "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/shared/infra/http/express/server.ts",
+    "dev:watch": "nodemon --exec ts-node src/index.ts",
+    "db:push": "prisma db push",
+    "db:pull": "prisma db pull && prisma generate",
+    "db:generate": "prisma generate",
+    "build": "tsc && tsc-alias",
+    "start": "node build/shared/infra/http/express/server.js",
+    "build-windows": "npm remove sharp && npm add sharp@0.33.3 --ignore-engines && rimraf build && npm db:generate && tsc"
   },
   "keywords": [],
   "author": "",
