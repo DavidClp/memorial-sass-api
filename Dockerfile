@@ -21,10 +21,11 @@ WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/prisma ./prisma
 
 ENV NODE_ENV=production
-ENV PORT=3001
+ENV PORT=3003
 
-EXPOSE 3001
+EXPOSE 3003
 
-CMD ["node", "build/shared/infra/http/express/server.js"]
+CMD ["node", "build/index.js"]
