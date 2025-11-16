@@ -9,15 +9,20 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-memorial}
       POSTGRES_DB: ${POSTGRES_DB:-memorial}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - memorial-network
 
   memorial-sass-api:
     build: .
     container_name: memorial-sass-api
     restart: always
+    depends_on:
+      - db
     networks:
+      - memorial-network
       - proxy
     environment:
       NODE_ENV: production
@@ -41,6 +46,8 @@ volumes:
   pgdata:
 
 networks:
+  memorial-network:
+    driver: bridge
   proxy:
     external: true
 
