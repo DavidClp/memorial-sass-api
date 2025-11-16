@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  senha     String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Memorial {
+  id            String   @id @default(uuid())
+  nome          String
+  biografia     String
+  slug          String   @unique
+  birthDate     DateTime?
+  departureDate DateTime?
+  fotoMainUrl   String
+  corPrincipal  String   @db.VarChar(7)
+  galeriaFotos  Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+

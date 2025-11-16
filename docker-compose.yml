@@ -1,0 +1,44 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: memorial-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-memorial}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-memorial}
+      POSTGRES_DB: ${POSTGRES_DB:-memorial}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  memorial-sass-api:
+    build: .
+    container_name: memorial-sass-api
+    restart: always
+    networks:
+      - proxy
+    environment:
+      NODE_ENV: production
+      PORT: ${PORT}
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      AWS_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
+      FRONTEND_URL: ${FRONTEND_URL}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      WEBHOOK_URL: ${WEBHOOK_URL}
+      MODE: PROD
+      EXECUTE_ROUTINES: true
+    ports:
+      - "${PORT}:${PORT}"
+
+volumes:
+  pgdata:
+  
+
+

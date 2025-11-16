@@ -1,0 +1,56 @@
+name: Deploy Memorial Sass API
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Deploy to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            set -e
+
+            if [ ! -d "/root/memorial-sass-api/.git" ]; then
+              rm -rf /root/memorial-sass-api
+              git clone https://github.com/${{ github.repository }} /root/memorial-sass-api
+            else
+              cd /root/memorial-sass-api
+              git fetch origin main
+              git reset --hard origin/main
+            fi
+
+            cd /root/memorial-sass-api
+
+            echo "NODE_ENV=production" > .env
+            echo "MODE=PROD" >> .env
+            echo "EXECUTE_ROUTINES=true" >> .env
+            echo "PORT=${{ secrets.PORT }}" >> .env
+            echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
+
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+  
+            echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
+            echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}" >> .env
+            
+            echo "WEBHOOK_URL=${{ secrets.WEBHOOK_URL }}" >> .env
+            echo "ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}" >> .env
+            echo "ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}" >> .env
+
+            docker compose up -d --build
+          EOF
