@@ -7,11 +7,22 @@ export class AuthService {
 
 	async login(email: string, senha: string) {
 		const user = await this.usersRepo.findByEmail(email);
-		if (!user) return { ok: false as const, status: 401, error: 'Credenciais inválidas' };
+		if (!user) {
+			console.log('nao tem usuario');
+			return { ok: false as const, status: 401, error: 'Credenciais inválidas' };
+		}
+		
 		const ok = await bcrypt.compare(senha, user.senha);
-		if (!ok) return { ok: false as const, status: 401, error: 'Credenciais inválidas' };
+		if (!ok) {
+			console.log('senha nao confere');
+			return { ok: false as const, status: 401, error: 'Credenciais inválidas' };
+		}
+
 		const payload = { email: user.email, name: user.name };
+
+		console.log('token JWT_SECRET', process.env.JWT_SECRET);
 		const token = jwt.sign(payload, process.env.JWT_SECRET || 'changeme', { expiresIn: '12h' });
+		console.log('token', token);
 		return { ok: true as const, token, user: payload };
 	}
 }

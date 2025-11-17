@@ -6,7 +6,10 @@ export const authRouter = Router();
 
 authRouter.post('/login', async (req, res) => {
 	const { email, senha } = req.body || {};
+	console.log('email', email);
+	console.log('senha', senha);
 	if (!email || !senha) {
+		console.log('nao tem email ou senha');
 		return res.status(400).json({ error: 'Credenciais inválidas' });
 	}
 	const service = new AuthService(new PrismaUsersRepository());
