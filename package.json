@@ -10,7 +10,7 @@
     "db:pull": "prisma db pull && prisma generate",
     "db:generate": "prisma generate",
     "build": "tsc && tsc-alias",
-    "start": "node build/shared/infra/http/express/server.js",
+    "start": "node build/index.js",
     "build-windows": "npm remove sharp && npm add sharp@0.33.3 --ignore-engines && rimraf build && npm db:generate && tsc"
   },
   "keywords": [],
@@ -37,6 +37,5 @@
     "prisma": "^6.19.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"
-  },
-  "type": "module"
+  }
 }
