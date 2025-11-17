@@ -10,7 +10,7 @@ export interface AuthRequest extends Request {
 	user?: AuthPayload;
 }
 
-export function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
+export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void | Response {
 	const header = req.headers['authorization'];
 
 	if (!header || !header.startsWith('Bearer ')) {
@@ -21,10 +21,8 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
 		const secret = process.env.JWT_SECRET || 'changeme';
 		const payload = jwt.verify(token, secret) as AuthPayload;
 		req.user = { email: payload.email, name: payload.name };
-		next();
+		return next();
 	} catch {
 		return res.status(401).json({ error: 'Token inválido' });
 	}
 }
-
-
