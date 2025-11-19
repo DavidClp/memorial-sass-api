@@ -20,9 +20,7 @@ export class AuthService {
 
 		const payload = { email: user.email, name: user.name };
 
-		console.log('token JWT_SECRET', process.env.JWT_SECRET);
-		const token = jwt.sign(payload, process.env.JWT_SECRET || 'changeme', { expiresIn: '12h' });
-		console.log('token', token);
+		const token = jwt.sign(payload, process.env.JWT_SECRET || 'changeme'/* , { expiresIn: '12h' } */);
 		return { ok: true as const, token, user: payload };
 	}
 }
