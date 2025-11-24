@@ -10,6 +10,10 @@ export const createMemorialSchema = z.object({
 	fotoMainUrl: z.string().min(1), // base64 data URL
 	corPrincipal: z.string().regex(hexColorRegex),
 	galeriaFotos: z.array(z.string()).min(0),
+	galeriaVideos: z.array(z.string()).min(0),
+	anoNascimento: z.number().int().min(1000).max(3000).optional().nullable(),
+	anoMorte: z.number().int().min(1000).max(3000).optional().nullable(),
+	causaMorte: z.string().max(500).optional().nullable(),
 });
 
 export const updateMemorialSchema = z.object({
@@ -19,6 +23,10 @@ export const updateMemorialSchema = z.object({
 	fotoMainUrl: z.string().min(1).optional(),
 	corPrincipal: z.string().regex(hexColorRegex).optional(),
 	galeriaFotos: z.array(z.string()).min(0).optional(),
+	galeriaVideos: z.array(z.string()).min(0).optional(),
+	anoNascimento: z.number().int().min(1000).max(3000).optional().nullable(),
+	anoMorte: z.number().int().min(1000).max(3000).optional().nullable(),
+	causaMorte: z.string().max(500).optional().nullable(),
 });
 
 export type CreateMemorialInput = z.infer<typeof createMemorialSchema>;

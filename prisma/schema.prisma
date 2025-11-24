@@ -23,9 +23,13 @@ model Memorial {
   slug          String   @unique
   birthDate     DateTime?
   departureDate DateTime?
+  anoNascimento Int?
+  anoMorte      Int?
+  causaMorte    String?
   fotoMainUrl   String
   corPrincipal  String   @db.VarChar(7)
   galeriaFotos  Json
+  galeriaVideos Json?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

@@ -16,7 +16,7 @@ app.use(cors({
 	methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 	allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(json({ limit: '15mb' }));
+app.use(json({ limit: '500mb' }));
 
 app.get('/health', (_req, res) => {
 	res.setHeader('Content-Type', 'application/json');

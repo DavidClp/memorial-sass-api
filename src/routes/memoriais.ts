@@ -8,11 +8,12 @@ import { PrismaMemoriaisRepository } from '../infra/repositories/PrismaMemoriais
 import { MemoriaisService } from '../services/MemoriaisService.js';
 import sharp from 'sharp';
 import { uploadToS3 } from '../shared/helpers/uploadToS3.js';
+import { compressVideo } from '../shared/helpers/compressVideo.js';
 
 export const memoriaisRouter = Router();
 const service = new MemoriaisService(new PrismaMemoriaisRepository());
 
-function rowToDto(row: { id: string; nome: string; biografia: string; slug: string; fotoMainUrl: string; corPrincipal: string; galeriaFotos: string[] }) {
+function rowToDto(row: { id: string; nome: string; biografia: string; slug: string; fotoMainUrl: string; corPrincipal: string; galeriaFotos: string[]; galeriaVideos: string[] }) {
 	return row;
 }
 
@@ -29,10 +30,17 @@ memoriaisRouter.get('/:slug', async (req, res) => {
 });
 
 /**
- * Verifica se uma string é um data URL base64
+ * Verifica se uma string é um data URL base64 de imagem
  */
 function isBase64DataUrl(str: string): boolean {
 	return /^data:image\/.+;base64,.+/.test(str);
+}
+
+/**
+ * Verifica se uma string é um data URL base64 de vídeo
+ */
+function isBase64VideoUrl(str: string): boolean {
+	return /^data:video\/.+;base64,.+/.test(str);
 }
 
 /**
@@ -100,17 +108,108 @@ async function processImage(imageData: string, key: string): Promise<string> {
 	return imageUrl;
 }
 
+/**
+ * Tipos de vídeo permitidos
+ */
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+
+/**
+ * Processa um vídeo: se for base64, valida tamanho e tipo, comprime e faz upload para S3. Se for URL, retorna a URL.
+ */
+async function processVideo(videoData: string, key: string): Promise<string> {
+	// Se já é uma URL (não base64), retorna diretamente
+	if (!isBase64VideoUrl(videoData)) {
+		// Verifica se é uma URL válida
+		try {
+			new URL(videoData);
+			return videoData;
+		} catch {
+			throw Object.assign(new Error('Vídeo inválido: deve ser base64 ou URL válida'), { status: 400 });
+		}
+	}
+
+	// Se é base64, processa e valida
+	const { buffer, mimeType, extension } = parseDataUrlToBuffer(videoData);
+
+	// Validar tipo de vídeo
+	if (!ALLOWED_VIDEO_TYPES.includes(mimeType)) {
+		throw Object.assign(new Error(`Tipo de vídeo não permitido. Tipos permitidos: ${ALLOWED_VIDEO_TYPES.join(', ')}`), { status: 400 });
+	}
+
+	// Validar tamanho máximo (50MB antes da compressão)
+	if (buffer.length > MAX_VIDEO_SIZE) {
+		throw Object.assign(new Error(`Vídeo muito grande. Tamanho máximo: ${MAX_VIDEO_SIZE / (1024 * 1024)}MB`), { status: 400 });
+	}
+
+	// Comprimir vídeo para reduzir tamanho
+	let finalBuffer: Buffer;
+	let finalMimeType: string;
+	let finalExtension: string;
+
+	try {
+		console.log(`Comprimindo vídeo: ${(buffer.length / (1024 * 1024)).toFixed(2)}MB`);
+		finalBuffer = await compressVideo(buffer, mimeType);
+		finalMimeType = 'video/mp4';
+		finalExtension = 'mp4';
+		const reduction = ((1 - finalBuffer.length / buffer.length) * 100).toFixed(1);
+		console.log(`Vídeo comprimido: ${(finalBuffer.length / (1024 * 1024)).toFixed(2)}MB (redução de ${reduction}%)`);
+	} catch (error) {
+		console.error('Erro ao comprimir vídeo, usando original:', error);
+		// Se a compressão falhar, usar o vídeo original
+		finalBuffer = buffer;
+		finalMimeType = mimeType;
+		finalExtension = extension;
+	}
+
+	// Garantir que a chave termina com .mp4 (sempre MP4 após compressão)
+	const videoKey = key.replace(/\.[^/.]+$/, '') + '.mp4';
+
+	const videoFile = {
+		buffer: finalBuffer,
+		mimetype: finalMimeType,
+		originalname: videoKey.split('/').pop() || 'video.mp4',
+	};
+
+	const videoUrl = await uploadToS3(videoFile, videoKey, false);
+
+	return videoUrl;
+}
+
+/**
+ * Processa múltiplos vídeos em lotes de 3 em paralelo (menos que imagens devido ao tamanho)
+ */
+async function processVideosInBatches(videos: string[], slug: string, batchSize: number = 3): Promise<string[]> {
+	const results: string[] = [];
+	
+	for (let i = 0; i < videos.length; i += batchSize) {
+		const batch = videos.slice(i, i + batchSize);
+		const batchPromises = batch.map((video) => {
+			const vKey = `memorial/${slug}/video_${uuidv4()}`;
+			return processVideo(video, vKey);
+		});
+		
+		const batchResults = await Promise.all(batchPromises);
+		results.push(...batchResults);
+	}
+	
+	return results;
+}
+
 memoriaisRouter.post('/', requireAuth, async (req, res) => {
 	try {
 		const parsed = createMemorialSchema.parse(req.body);
 
-		// Upload imagens
 		const mainKey = `memorial/${parsed.slug}/main_${Date.now()}.webp`;
 		const mainUrl = await processImage(parsed.fotoMainUrl, mainKey);
 
 		console.time('processImage');
 		const galleryUrls = await processImagesInBatches(parsed.galeriaFotos || [], parsed.slug);
 		console.timeEnd('processImage');
+
+		console.time('processVideo');
+		const videoUrls = await processVideosInBatches(parsed.galeriaVideos || [], parsed.slug);
+		console.timeEnd('processVideo');
 
 		const result = await service.create({
 			nome: parsed.nome,
@@ -119,6 +218,10 @@ memoriaisRouter.post('/', requireAuth, async (req, res) => {
 			fotoMainUrl: mainUrl,
 			corPrincipal: parsed.corPrincipal,
 			galeriaFotos: galleryUrls,
+			galeriaVideos: videoUrls,
+			anoNascimento: parsed.anoNascimento ?? null,
+			anoMorte: parsed.anoMorte ?? null,
+			causaMorte: parsed.causaMorte ?? null,
 		});
 		if (!result.ok) return res.status(result.status).json({ error: result.error });
 		return res.status(201).json(rowToDto(result.data));
@@ -147,6 +250,10 @@ memoriaisRouter.put('/:slug', requireAuth, async (req, res) => {
 		if (parsed.galeriaFotos) {
 			galleryUrls = await processImagesInBatches(parsed.galeriaFotos, parsed.slug ?? existing.slug);
 		}
+		let videoUrls = existing.galeriaVideos;
+		if (parsed.galeriaVideos) {
+			videoUrls = await processVideosInBatches(parsed.galeriaVideos, parsed.slug ?? existing.slug);
+		}
 		const updated = {
 			nome: parsed.nome ?? existing.nome,
 			biografia: parsed.biografia ?? existing.biografia,
@@ -154,6 +261,10 @@ memoriaisRouter.put('/:slug', requireAuth, async (req, res) => {
 			fotoMainUrl: newMainUrl,
 			corPrincipal: parsed.corPrincipal ?? existing.corPrincipal,
 			galeriaFotos: galleryUrls,
+			galeriaVideos: videoUrls,
+			anoNascimento: parsed.anoNascimento !== undefined ? parsed.anoNascimento : existing.anoNascimento,
+			anoMorte: parsed.anoMorte !== undefined ? parsed.anoMorte : existing.anoMorte,
+			causaMorte: parsed.causaMorte !== undefined ? parsed.causaMorte : existing.causaMorte,
 		};
 		const result = await service.update(slug, updated);
 		if (!result.ok) return res.status(result.status).json({ error: result.error });

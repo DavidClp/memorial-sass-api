@@ -6,6 +6,10 @@ export type Memorial = {
 	fotoMainUrl: string;
 	corPrincipal: string;
 	galeriaFotos: string[];
+	galeriaVideos: string[];
+	anoNascimento?: number | null;
+	anoMorte?: number | null;
+	causaMorte?: string | null;
 };
 
 export interface IMemoriaisRepository {

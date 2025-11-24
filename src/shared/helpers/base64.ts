@@ -9,13 +9,17 @@ const mimeToExt: Record<string, string> = {
 	'image/png': 'png',
 	'image/webp': 'webp',
 	'image/gif': 'gif',
+	'video/mp4': 'mp4',
+	'video/webm': 'webm',
+	'video/quicktime': 'mov',
+	'video/x-msvideo': 'avi',
 };
 
 export function parseDataUrlToBuffer(dataUrl: string): ParsedBase64 {
-	// Ex.: data:image/jpeg;base64,/9j/4AAQ...
+	// Ex.: data:image/jpeg;base64,/9j/4AAQ... ou data:video/mp4;base64,...
 	const match = /^data:(.+);base64,(.+)$/.exec(dataUrl);
 	if (!match) {
-		throw Object.assign(new Error('Imagem base64 inválida'), { status: 400 });
+		throw Object.assign(new Error('Arquivo base64 inválido'), { status: 400 });
 	}
 	const mimeType = match[1];
 	const b64 = match[2];
