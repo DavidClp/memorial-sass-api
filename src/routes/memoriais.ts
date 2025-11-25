@@ -13,7 +13,7 @@ import { compressVideo } from '../shared/helpers/compressVideo.js';
 export const memoriaisRouter = Router();
 const service = new MemoriaisService(new PrismaMemoriaisRepository());
 
-function rowToDto(row: { id: string; nome: string; biografia: string; slug: string; fotoMainUrl: string; corPrincipal: string; galeriaFotos: string[]; galeriaVideos: string[] }) {
+function rowToDto(row: { id: string; nome: string; biografia: string; slug: string; fotoMainUrl: string; corPrincipal: string; galeriaFotos: string[]; galeriaVideos: string[]; dataNascimento?: Date | null; dataMorte?: Date | null; causaMorte?: string | null }) {
 	return row;
 }
 
@@ -219,8 +219,8 @@ memoriaisRouter.post('/', requireAuth, async (req, res) => {
 			corPrincipal: parsed.corPrincipal,
 			galeriaFotos: galleryUrls,
 			galeriaVideos: videoUrls,
-			anoNascimento: parsed.anoNascimento ?? null,
-			anoMorte: parsed.anoMorte ?? null,
+			dataNascimento: parsed.dataNascimento ? new Date(parsed.dataNascimento) : null,
+			dataMorte: parsed.dataMorte ? new Date(parsed.dataMorte) : null,
 			causaMorte: parsed.causaMorte ?? null,
 		});
 		if (!result.ok) return res.status(result.status).json({ error: result.error });
@@ -262,8 +262,8 @@ memoriaisRouter.put('/:slug', requireAuth, async (req, res) => {
 			corPrincipal: parsed.corPrincipal ?? existing.corPrincipal,
 			galeriaFotos: galleryUrls,
 			galeriaVideos: videoUrls,
-			anoNascimento: parsed.anoNascimento !== undefined ? parsed.anoNascimento : existing.anoNascimento,
-			anoMorte: parsed.anoMorte !== undefined ? parsed.anoMorte : existing.anoMorte,
+			dataNascimento: parsed.dataNascimento !== undefined ? (parsed.dataNascimento ? new Date(parsed.dataNascimento) : null) : existing.dataNascimento,
+			dataMorte: parsed.dataMorte !== undefined ? (parsed.dataMorte ? new Date(parsed.dataMorte) : null) : existing.dataMorte,
 			causaMorte: parsed.causaMorte !== undefined ? parsed.causaMorte : existing.causaMorte,
 		};
 		const result = await service.update(slug, updated);

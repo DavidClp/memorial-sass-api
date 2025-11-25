@@ -13,8 +13,8 @@ export class PrismaMemoriaisRepository implements IMemoriaisRepository {
 			corPrincipal: r.corPrincipal,
 			galeriaFotos: (r.galeriaFotos as unknown as string[]) ?? [],
 			galeriaVideos: (r.galeriaVideos as unknown as string[]) ?? [],
-			anoNascimento: r.anoNascimento,
-			anoMorte: r.anoMorte,
+			dataNascimento: r.birthDate,
+			dataMorte: r.departureDate,
 			causaMorte: r.causaMorte,
 		}));
 	}
@@ -31,8 +31,8 @@ export class PrismaMemoriaisRepository implements IMemoriaisRepository {
 			corPrincipal: r.corPrincipal,
 			galeriaFotos: (r.galeriaFotos as unknown as string[]) ?? [],
 			galeriaVideos: (r.galeriaVideos as unknown as string[]) ?? [],
-			anoNascimento: r.anoNascimento,
-			anoMorte: r.anoMorte,
+			dataNascimento: r.birthDate,
+			dataMorte: r.departureDate,
 			causaMorte: r.causaMorte,
 		};
 	}
@@ -52,8 +52,8 @@ export class PrismaMemoriaisRepository implements IMemoriaisRepository {
 				corPrincipal: data.corPrincipal,
 				galeriaFotos: data.galeriaFotos as unknown as any,
 				galeriaVideos: data.galeriaVideos as unknown as any,
-				anoNascimento: data.anoNascimento ?? null,
-				anoMorte: data.anoMorte ?? null,
+				birthDate: data.dataNascimento ?? null,
+				departureDate: data.dataMorte ?? null,
 				causaMorte: data.causaMorte ?? null,
 			},
 		});
@@ -66,8 +66,8 @@ export class PrismaMemoriaisRepository implements IMemoriaisRepository {
 			corPrincipal: r.corPrincipal,
 			galeriaFotos: (r.galeriaFotos as unknown as string[]) ?? [],
 			galeriaVideos: (r.galeriaVideos as unknown as string[]) ?? [],
-			anoNascimento: r.anoNascimento,
-			anoMorte: r.anoMorte,
+			dataNascimento: r.birthDate,
+			dataMorte: r.departureDate,
 			causaMorte: r.causaMorte,
 		};
 	}
@@ -83,8 +83,8 @@ export class PrismaMemoriaisRepository implements IMemoriaisRepository {
 				corPrincipal: data.corPrincipal,
 				galeriaFotos: data.galeriaFotos as unknown as any,
 				galeriaVideos: data.galeriaVideos as unknown as any,
-				anoNascimento: data.anoNascimento !== undefined ? data.anoNascimento : undefined,
-				anoMorte: data.anoMorte !== undefined ? data.anoMorte : undefined,
+				birthDate: data.dataNascimento !== undefined ? data.dataNascimento : undefined,
+				departureDate: data.dataMorte !== undefined ? data.dataMorte : undefined,
 				causaMorte: data.causaMorte !== undefined ? data.causaMorte : undefined,
 			},
 		}).catch(() => undefined);
@@ -98,8 +98,8 @@ export class PrismaMemoriaisRepository implements IMemoriaisRepository {
 			corPrincipal: r.corPrincipal,
 			galeriaFotos: (r.galeriaFotos as unknown as string[]) ?? [],
 			galeriaVideos: (r.galeriaVideos as unknown as string[]) ?? [],
-			anoNascimento: r.anoNascimento,
-			anoMorte: r.anoMorte,
+			dataNascimento: r.birthDate,
+			dataMorte: r.departureDate,
 			causaMorte: r.causaMorte,
 		};
 	}

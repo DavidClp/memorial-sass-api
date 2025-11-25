@@ -7,8 +7,8 @@ export type Memorial = {
 	corPrincipal: string;
 	galeriaFotos: string[];
 	galeriaVideos: string[];
-	anoNascimento?: number | null;
-	anoMorte?: number | null;
+	dataNascimento?: Date | null;
+	dataMorte?: Date | null;
 	causaMorte?: string | null;
 };
 

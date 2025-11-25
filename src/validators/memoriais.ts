@@ -11,8 +11,8 @@ export const createMemorialSchema = z.object({
 	corPrincipal: z.string().regex(hexColorRegex),
 	galeriaFotos: z.array(z.string()).min(0),
 	galeriaVideos: z.array(z.string()).min(0),
-	anoNascimento: z.number().int().min(1000).max(3000).optional().nullable(),
-	anoMorte: z.number().int().min(1000).max(3000).optional().nullable(),
+	dataNascimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+	dataMorte: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
 	causaMorte: z.string().max(500).optional().nullable(),
 });
 
@@ -24,8 +24,8 @@ export const updateMemorialSchema = z.object({
 	corPrincipal: z.string().regex(hexColorRegex).optional(),
 	galeriaFotos: z.array(z.string()).min(0).optional(),
 	galeriaVideos: z.array(z.string()).min(0).optional(),
-	anoNascimento: z.number().int().min(1000).max(3000).optional().nullable(),
-	anoMorte: z.number().int().min(1000).max(3000).optional().nullable(),
+	dataNascimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+	dataMorte: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
 	causaMorte: z.string().max(500).optional().nullable(),
 });
 
