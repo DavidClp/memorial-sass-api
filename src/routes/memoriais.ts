@@ -5,13 +5,18 @@ import { v4 as uuidv4 } from 'uuid';
 import { parseDataUrlToBuffer } from '../shared/helpers/base64.js';
 import { deleteAllFromPrefix } from '../shared/helpers/deleteFromS3.js';
 import { PrismaMemoriaisRepository } from '../infra/repositories/PrismaMemoriaisRepository.js';
+import { PrismaComentariosRepository } from '../infra/repositories/PrismaComentariosRepository.js';
 import { MemoriaisService } from '../services/MemoriaisService.js';
+import { ComentariosService } from '../services/ComentariosService.js';
 import sharp from 'sharp';
 import { uploadToS3 } from '../shared/helpers/uploadToS3.js';
 import { compressVideo } from '../shared/helpers/compressVideo.js';
 
 export const memoriaisRouter = Router();
-const service = new MemoriaisService(new PrismaMemoriaisRepository());
+const memoriaisRepository = new PrismaMemoriaisRepository();
+const comentariosRepository = new PrismaComentariosRepository();
+const service = new MemoriaisService(memoriaisRepository);
+const comentariosService = new ComentariosService(comentariosRepository, memoriaisRepository);
 
 function rowToDto(row: { id: string; nome: string; biografia: string; slug: string; fotoMainUrl: string; corPrincipal: string; galeriaFotos: string[]; galeriaVideos: string[]; dataNascimento?: Date | null; dataMorte?: Date | null; causaMorte?: string | null }) {
 	return row;
@@ -20,6 +25,92 @@ function rowToDto(row: { id: string; nome: string; biografia: string; slug: stri
 memoriaisRouter.get('/', async (_req, res) => {
 	const rows = await service.list();
 	return res.status(200).json(rows.map(rowToDto));
+});
+
+// ==================== Rotas de Comentários (DEVEM VIR ANTES DE /:slug) ====================
+
+/**
+ * GET /memoriais/:slug/comentarios?page=1&limit=5
+ * Lista comentários de um memorial com paginação
+ */
+memoriaisRouter.get('/:slug/comentarios', async (req, res) => {
+	try {
+		const slug = req.params.slug;
+		const pagina = parseInt(req.query.page as string) || 1;
+		const limite = parseInt(req.query.limit as string) || 5;
+
+		if (pagina < 1) {
+			return res.status(400).json({ error: 'Página deve ser maior que 0' });
+		}
+
+		if (limite < 1 || limite > 100) {
+			return res.status(400).json({ error: 'Limite deve estar entre 1 e 100' });
+		}
+
+		const result = await comentariosService.listByMemorialSlug(slug, pagina, limite);
+		if (!result.ok) {
+			return res.status(result.status).json({ error: result.error });
+		}
+
+		return res.status(200).json({
+			comentarios: result.data.comentarios.map(c => ({
+				id: c.id,
+				memorialId: c.memorialId,
+				nome: c.nome,
+				texto: c.texto,
+				criadoEm: c.criadoEm.toISOString(),
+			})),
+			total: result.data.total,
+			pagina: result.data.pagina,
+			totalPaginas: result.data.totalPaginas,
+		});
+	} catch (err: any) {
+		console.error('Erro ao listar comentários:', err);
+		return res.status(500).json({ error: 'Erro ao listar comentários' });
+	}
+});
+
+/**
+ * POST /memoriais/:slug/comentarios
+ * Cria um novo comentário (público, sem autenticação)
+ */
+memoriaisRouter.post('/:slug/comentarios', async (req, res) => {
+	try {
+		const slug = req.params.slug;
+		const { nome, texto } = req.body;
+
+		if (!texto || typeof texto !== 'string' || texto.trim().length === 0) {
+			return res.status(400).json({ error: 'Texto do comentário é obrigatório' });
+		}
+
+		if (texto.trim().length > 5000) {
+			return res.status(400).json({ error: 'Texto do comentário não pode exceder 5000 caracteres' });
+		}
+
+		if (nome && typeof nome === 'string' && nome.trim().length > 100) {
+			return res.status(400).json({ error: 'Nome não pode exceder 100 caracteres' });
+		}
+
+		const result = await comentariosService.create(slug, {
+			nome: nome?.trim() || undefined,
+			texto: texto.trim(),
+		});
+
+		if (!result.ok) {
+			return res.status(result.status).json({ error: result.error });
+		}
+
+		return res.status(201).json({
+			id: result.data.id,
+			memorialId: result.data.memorialId,
+			nome: result.data.nome,
+			texto: result.data.texto,
+			criadoEm: result.data.criadoEm.toISOString(),
+		});
+	} catch (err: any) {
+		console.error('Erro ao criar comentário:', err);
+		return res.status(500).json({ error: 'Erro ao criar comentário' });
+	}
 });
 
 memoriaisRouter.get('/:slug', async (req, res) => {

@@ -17,19 +17,27 @@ model User {
 }
 
 model Memorial {
-  id            String   @id @default(uuid())
+  id            String       @id @default(uuid())
   nome          String
   biografia     String
-  slug          String   @unique
+  slug          String       @unique
   birthDate     DateTime?
   departureDate DateTime?
   causaMorte    String?
   fotoMainUrl   String
-  corPrincipal  String   @db.VarChar(7)
+  corPrincipal  String       @db.VarChar(7)
   galeriaFotos  Json
   galeriaVideos Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  comentarios   Comentario[]
 }
 
-
+model Comentario {
+  id         String   @id @default(uuid())
+  memorialId String
+  memorial   Memorial @relation(fields: [memorialId], references: [id], onDelete: Cascade)
+  nome       String?
+  texto      String
+  criadoEm   DateTime @default(now())
+}
