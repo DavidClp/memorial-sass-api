@@ -174,13 +174,13 @@ async function processImage(imageData: string, key: string): Promise<string> {
 
 	const webpBuffer = await sharp(buffer)
 		.rotate()
-		.resize(800, 800, {
+		.resize(1200, 1200, {
 			fit: 'inside',
 			withoutEnlargement: true
 		})
 		.webp({
-			quality: 85,
-			effort: 6,
+			quality: 90,
+			effort: 3,
 			smartSubsample: true
 		})
 		.toBuffer();
