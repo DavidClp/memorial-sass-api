@@ -23,16 +23,16 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
             set -e
 
-            if [ ! -d "/root/memorial-sass-api/.git" ]; then
-              rm -rf /root/memorial-sass-api
-              git clone https://github.com/${{ github.repository }} /root/memorial-sass-api
+            if [ ! -d "/home/david/memorial-sass-api/.git" ]; then
+              rm -rf /home/david/memorial-sass-api
+              git clone https://github.com/${{ github.repository }} /home/david/memorial-sass-api
             else
-              cd /root/memorial-sass-api
+              cd /home/david/memorial-sass-api
               git fetch origin main
               git reset --hard origin/main
             fi
 
-            cd /root/memorial-sass-api
+            cd /home/david/memorial-sass-api
 
             echo "NODE_ENV=production" > .env
             echo "MODE=PROD" >> .env
